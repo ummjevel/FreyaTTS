@@ -1,4 +1,4 @@
-"""FreyaDiT: a non-autoregressive flow-matching DiT for Turkish TTS.
+"""FreyaDiT: a non-autoregressive flow-matching DiT for Korean TTS.
 
 Latent frames self-attend with rotary position embeddings and cross-attend to
 character-level text features refined by a small ConvNeXt stack. Trained with
@@ -14,8 +14,11 @@ from einops import rearrange
 
 
 
-# spread of 2.3 Hz, against 14.9 Hz for the previous default of 0.
-LEYLA_SEED = 9
+# noise seed for the shipped voice. Re-pin this once a Korean SFT checkpoint
+# has a chosen voice; any fixed seed gives a fixed (but arbitrary) speaker
+# until then. Was LEYLA_SEED=9 (spread 2.3 Hz vs 14.9 Hz for seed 0) for the
+# original Turkish release -- kept as the placeholder default.
+DEFAULT_SEED = 9
 
 
 def rope_freqs(dim, length, theta=10000.0, device=None):
@@ -223,7 +226,7 @@ class FreyaDiT(nn.Module):
         return ((pred - logT) ** 2).mean(), pred
 
     @torch.no_grad()
-    def sample(self, text_ids, T, steps=32, cmask=None, seed=LEYLA_SEED):
+    def sample(self, text_ids, T, steps=32, cmask=None, seed=DEFAULT_SEED):
         """Integrate the ODE from noise to latents with a fixed-step Euler solver."""
         B = text_ids.shape[0]
         ctx = self.text_encode(text_ids)
