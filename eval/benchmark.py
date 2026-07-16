@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
-"""Evaluate a TTS system on Freya-TR-Eval with band-matched WER/CER.
+"""Evaluate a TTS system with band-matched WER/CER on a Korean sentence set.
 
 Protocol: synthesize each sentence, downsample audio to 8 kHz so every system
 is judged in the same band, transcribe with Whisper large-v3 (faster-whisper,
-Turkish, beam 5), normalize both reference and hypothesis, then report
+Korean, beam 5), normalize both reference and hypothesis, then report
 WER/CER (jiwer) and RTF.
 
+There is no Korean equivalent of Freya-TR-Eval yet -- pass your own held-out
+sentences via --data (JSONL, one {"text": ...} per line; a natural source is
+a slice of utterances excluded from training/build_manifest_ko.py's input).
+
 Usage:
-  python3 eval/benchmark.py --system freyatts --out results/freyatts.json
-  python3 eval/benchmark.py --system freyatts --data my_eval.jsonl
+  python3 eval/benchmark.py --system freyatts --data my_ko_eval.jsonl --out results/freyatts.json
 """
 
 import argparse
@@ -23,44 +26,59 @@ JUDGE_SR = 8000
 
 
 # ----------------------------- text normalization --------------------------
+# Self-contained (no `torch`-importing freyatts.pipeline dependency) so this
+# script stays usable for scoring any TTS system, not just FreyaTTS. Mirrors
+# freyatts/pipeline.py's Sino-Korean spelling -- keep the two in sync.
 
-_UNITS = ["", "bir", "iki", "üç", "dört", "beş", "altı", "yedi", "sekiz", "dokuz"]
-_TENS = ["", "on", "yirmi", "otuz", "kırk", "elli", "altmış", "yetmiş", "seksen", "doksan"]
-_SCALES = [(10 ** 9, "milyar"), (10 ** 6, "milyon"), (10 ** 3, "bin")]
+_UNITS = ["", "일", "이", "삼", "사", "오", "육", "칠", "팔", "구"]
+_SCALES = [(10 ** 12, "조"), (10 ** 8, "억"), (10 ** 4, "만")]
+
+
+def _spell_group(n):
+    parts = []
+    if n >= 1000:
+        d = n // 1000
+        if d > 1:
+            parts.append(_UNITS[d])
+        parts.append("천")
+        n %= 1000
+    if n >= 100:
+        d = n // 100
+        if d > 1:
+            parts.append(_UNITS[d])
+        parts.append("백")
+        n %= 100
+    if n >= 10:
+        d = n // 10
+        if d > 1:
+            parts.append(_UNITS[d])
+        parts.append("십")
+        n %= 10
+    if n > 0:
+        parts.append(_UNITS[n])
+    return "".join(parts)
 
 
 def digits_to_words(n):
-    """Spell a non-negative integer in Turkish (0 -> 'sıfır')."""
+    """Spell a non-negative integer in Sino-Korean (0 -> '영'), grouped by 만/억/조."""
     if n == 0:
-        return "sıfır"
+        return "영"
     parts = []
-    for scale, name in _SCALES:
-        if n >= scale:
-            head = n // scale
-            n = n % scale
-            # Turkish drops the leading 'bir' before 'bin'
-            if not (scale == 1000 and head == 1):
-                parts.append(digits_to_words(head))
-            parts.append(name)
-    if n >= 100:
-        if n // 100 > 1:
-            parts.append(_UNITS[n // 100])
-        parts.append("yüz")
-        n = n % 100
-    if n >= 10:
-        parts.append(_TENS[n // 10])
-        n = n % 10
-    if n > 0:
-        parts.append(_UNITS[n])
-    return " ".join(parts)
+    remaining = n
+    for scale_val, scale_name in _SCALES:
+        if remaining >= scale_val:
+            head = remaining // scale_val
+            remaining %= scale_val
+            parts.append(scale_name if head == 1 else _spell_group(head) + scale_name)
+    if remaining > 0 or not parts:
+        parts.append(_spell_group(remaining))
+    return "".join(parts)
 
 
-def normalize_tr(text):
-    """Lowercase, spell out digit runs, strip punctuation. Applied to both sides."""
-    # Turkish dotted/dotless i: fix casefolding before lower()
-    t = text.replace("İ", "i").replace("I", "ı").lower()
-    t = re.sub(r"\d+", lambda m: digits_to_words(int(m.group(0))), t)
-    t = re.sub(r"[^\wçğıöşü ]", " ", t)
+def normalize_ko(text):
+    """Spell out digit runs, strip punctuation/whitespace. Applied to both sides."""
+    t = re.sub(r"\d+", lambda m: digits_to_words(int(m.group(0))), text)
+    t = re.sub(r"[^\wㄱ-ㅎㅏ-ㅣ가-힣 ]", " ", t)
     t = re.sub(r"\s+", " ", t).strip()
     return t
 
@@ -101,7 +119,7 @@ class XTTSAdapter:
         self.ref = args.ref
 
     def synthesize(self, text):
-        wav = self.tts.tts(text=text, speaker_wav=self.ref, language="tr")
+        wav = self.tts.tts(text=text, speaker_wav=self.ref, language="ko")
         return np.asarray(wav, dtype=np.float32), 24000
 
 
@@ -136,7 +154,7 @@ def transcribe(asr, wav, sr):
     wav8k = librosa.resample(wav.astype(np.float32), orig_sr=sr, target_sr=JUDGE_SR)
     # whisper expects 16 kHz input; upsampling from 8 kHz keeps the band limit
     wav16k = librosa.resample(wav8k, orig_sr=JUDGE_SR, target_sr=16000)
-    segments, _ = asr.transcribe(wav16k, language="tr", beam_size=5)
+    segments, _ = asr.transcribe(wav16k, language="ko", beam_size=5)
     return " ".join(seg.text for seg in segments).strip()
 
 
@@ -146,11 +164,12 @@ def main():
                     help="which TTS system to evaluate")
     ap.add_argument("--model", default="freyavoice/freya-tts",
                     help="FreyaTTS model id or local directory")
-    ap.add_argument("--dataset", default="freyavoice/freya-tr-eval",
-                    help="HF dataset with a 'text' column")
+    ap.add_argument("--dataset", default="",
+                    help="HF dataset with a 'text' column (no Korean eval set is bundled -- "
+                         "point this at your own, or use --data)")
     ap.add_argument("--split", default="test", help="dataset split to use")
     ap.add_argument("--data", default="",
-                    help="local JSONL fallback ({'text': ...} per line); overrides --dataset")
+                    help="local JSONL ({'text': ...} per line, Korean sentences); overrides --dataset")
     ap.add_argument("--ref", default="", help="reference wav for cloning systems (e.g. xtts)")
     ap.add_argument("--device", default="cuda", help="torch device for synthesis")
     ap.add_argument("--limit", type=int, default=0, help="evaluate only the first N sentences")
@@ -178,8 +197,8 @@ def main():
         synth_time += time.time() - t0
         audio_time += len(wav) / sr
 
-        ref = normalize_tr(text)
-        hyp = normalize_tr(transcribe(asr, wav, sr))
+        ref = normalize_ko(text)
+        hyp = normalize_ko(transcribe(asr, wav, sr))
         refs.append(ref)
         hyps.append(hyp)
         print(f"[{i + 1}/{len(sentences)}] wer={wer(ref, hyp):.2f} | {text[:48]!r} -> {hyp[:48]!r}",

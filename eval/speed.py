@@ -258,7 +258,7 @@ def main():
                     help="which TTS system to benchmark")
     ap.add_argument("--model", default="freyavoice/freya-tts",
                     help="FreyaTTS model id or local directory")
-    ap.add_argument("--prompts", default=os.path.join(HERE, "prompts_tr.json"),
+    ap.add_argument("--prompts", default=os.path.join(HERE, "prompts_ko.json"),
                     help="JSON with short/medium/long prompt buckets")
     ap.add_argument("--runs", type=int, default=10, help="timed runs per sentence")
     ap.add_argument("--warmup", type=int, default=3, help="untimed warmup runs per sentence")
