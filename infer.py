@@ -1,7 +1,7 @@
-"""Synthesize Turkish speech with FreyaTTS from the command line.
+"""Synthesize Korean speech with FreyaTTS from the command line.
 
 Example:
-    python infer.py --text "Merhaba, size nasıl yardımcı olabilirim?" --out output.wav
+    python infer.py --text "안녕하세요, 어떻게 도와드릴까요?" --out output.wav
 """
 
 import argparse
@@ -11,7 +11,7 @@ from freyatts import FreyaTTS
 
 def main():
     parser = argparse.ArgumentParser(description="FreyaTTS inference")
-    parser.add_argument("--text", required=True, help="Turkish text to synthesize")
+    parser.add_argument("--text", required=True, help="Korean text to synthesize")
     parser.add_argument("--out", default="output.wav", help="output wav path (48 kHz)")
     parser.add_argument("--model", default="freyavoice/freya-tts",
                         help="Hugging Face repo id or a local directory with config.json + model.safetensors")

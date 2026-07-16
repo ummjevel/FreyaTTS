@@ -19,16 +19,22 @@ import numpy as np
 import soundfile as sf
 import torch
 
-from freyatts.model import LEYLA_SEED
+from freyatts.model import DEFAULT_SEED
+from freyatts.pipeline import normalize
 
 SAMPLE_RATE = 48000
 SAMPLES_PER_FRAME = 1920  # 48 kHz audio over 25 Hz latents
 
 
 @torch.no_grad()
-def synthesize_batch(model, vae, char_to_id, texts, steps=32, seed=LEYLA_SEED, device="cuda"):
-    """Synthesize a list of texts in one padded batch. Returns a list of waveforms."""
-    ids_list = [torch.tensor([char_to_id.get(ch, 1) for ch in t], device=device) for t in texts]
+def synthesize_batch(model, vae, char_to_id, texts, steps=32, seed=DEFAULT_SEED, device="cuda"):
+    """Synthesize a list of texts in one padded batch. Returns a list of waveforms.
+
+    `texts` are raw Korean sentences -- each is normalized (digit spelling)
+    and jamo-decomposed the same way `FreyaTTS.synthesize` does before
+    tokenizing, so callers don't have to pre-process the input file.
+    """
+    ids_list = [torch.tensor([char_to_id.get(ch, 1) for ch in normalize(t)], device=device) for t in texts]
     max_chars = max(len(item) for item in ids_list)
     ids = torch.zeros(len(texts), max_chars, dtype=torch.long, device=device)
     char_mask = torch.zeros(len(texts), max_chars, dtype=torch.bool, device=device)
@@ -86,7 +92,7 @@ def load(model_id, device):
 
 def main():
     parser = argparse.ArgumentParser(description="Batched FreyaTTS inference")
-    parser.add_argument("--texts", required=True, help="text file, one Turkish sentence per line")
+    parser.add_argument("--texts", required=True, help="text file, one Korean sentence per line")
     parser.add_argument("--outdir", default="wavs", help="output directory for numbered wavs")
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--model", default="freyavoice/freya-tts")
