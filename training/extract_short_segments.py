@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Cut short (1-2 word) segments out of a speaker corpus via MMS forced alignment.
+"""Cut short (1-3 word) segments out of a speaker corpus via MMS forced alignment.
 
 Long-form training data underrepresents very short utterances (single words,
 numbers, acknowledgements), so the model struggles with them. This script
-force-aligns each clip with torchaudio's MMS aligner, extracts contiguous 1- and
-2-word spans, re-encodes them to AudioVAE latents, and writes shards that can be
+force-aligns each clip with torchaudio's MMS aligner, extracts contiguous short
+word spans, re-encodes them to AudioVAE latents, and writes shards that can be
 mixed into the SFT stage 2 data.
 """
 
@@ -20,6 +20,7 @@ import librosa
 import numpy as np
 import soundfile as sf
 import torch
+from uroman import Uroman
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -27,10 +28,10 @@ from freyatts.vae import load_audio_vae
 
 VAE_SAMPLE_RATE = 16000
 
-# the MMS aligner vocabulary is plain a-z, so Turkish letters are romanized
-# for alignment only — extracted text keeps the original spelling
-TR_TO_ASCII = str.maketrans({"ı": "i", "İ": "i", "ç": "c", "Ç": "c", "ğ": "g", "Ğ": "g",
-                             "ş": "s", "Ş": "s", "ö": "o", "Ö": "o", "ü": "u", "Ü": "u"})
+# the MMS aligner vocabulary is plain a-z, so Hangul is romanized via uroman
+# (syllable-block-aware, unlike a simple diacritic strip) for alignment only —
+# extracted text keeps the original Hangul spelling
+_UROMANIZER = Uroman()
 
 
 def parse_args():
@@ -41,9 +42,9 @@ def parse_args():
                         help="output directory for latent shards")
     parser.add_argument("--n", type=int, default=8000,
                         help="number of source clips to scan")
-    parser.add_argument("--max_words", type=int, default=2,
-                        help="longest span to extract, in words")
-    parser.add_argument("--max_s", type=float, default=1.6,
+    parser.add_argument("--max_words", type=int, default=3,
+                        help="longest span to extract, in eojeol (space-separated words)")
+    parser.add_argument("--max_s", type=float, default=3.0,
                         help="drop segments longer than this many seconds")
     parser.add_argument("--max_repeats", type=int, default=40,
                         help="cap on extracted copies of the same phrase")
@@ -55,7 +56,7 @@ def parse_args():
 
 
 def romanize(word):
-    return re.sub(r"[^a-z]", "", word.lower().translate(TR_TO_ASCII))
+    return re.sub(r"[^a-z]", "", _UROMANIZER.romanize_string(word).lower())
 
 
 def load_clip(path):

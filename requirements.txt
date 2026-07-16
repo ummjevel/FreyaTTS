@@ -6,6 +6,7 @@ librosa
 huggingface_hub
 safetensors
 voxcpm
+uroman
 
 # evaluation only
 # faster-whisper
