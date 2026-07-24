@@ -46,11 +46,11 @@ Five target voices were built by using [Qwen3-TTS VoiceDesign](https://huggingfa
 
 | Voice | Description | Self-rated quality | Reference text |
 | --- | --- | --- | --- |
-| `voiceA_hot1B` | 쿨 hot guy, 중저음, 자연스러운 대화체 (최선) | **ok** -- best of the 5 | "음, 그건 이렇게 하면 되지 않을까요?" |
-| `voiceB_cool4` | 도시세련, 쿨하지만 차갑지 않음 | **부족 (화질↓)** -- below target quality | "괜찮아요, 제가 도와드릴게요." |
-| `voiceC_cool5` | 절제따뜻, 담백한 쿨 | **상대적 양호** -- acceptable | "괜찮아요, 제가 도와드릴게요." |
-| `voiceD_young3` | 발랄싱그 풋풋 연하남 (중저음, 어리고 싱그러운) | **보통** -- average | "음, 그건 이렇게 하면 되지 않을까요?" |
-| `voiceE_young2` | 앳된 수줍은 연하남 (풋풋, 클론 일관성 좋음) | **부족 (화질↓, 기계톤)** -- below target, robotic artifacts | "아 진짜요? 완전 신기하네요." |
+| `voiceA_hot1B` | 저음, 차분하고 자연스러운 대화체 톤 (최선) | **ok** -- best of the 5 | "음, 그건 이렇게 하면 되지 않을까요?" |
+| `voiceB_cool4` | 중고음, 세련되고 절제된 톤 | **부족 (화질↓)** -- below target quality | "괜찮아요, 제가 도와드릴게요." |
+| `voiceC_cool5` | 차분하고 담백한 톤 | **상대적 양호** -- acceptable | "괜찮아요, 제가 도와드릴게요." |
+| `voiceD_young3` | 밝고 경쾌한 중저음, 생기 있는 톤 | **보통** -- average | "음, 그건 이렇게 하면 되지 않을까요?" |
+| `voiceE_young2` | 밝고 앳된 고음, 클론 일관성 좋음 | **부족 (화질↓, 기계톤)** -- below target, robotic artifacts | "아 진짜요? 완전 신기하네요." |
 
 Reference clips: `confirmed_voices/voice{A..E}_*.wav`. Quality self-ratings are from internal listening review (`confirmed_voices/best_seeds.json`), not a formal MOS study -- no third-party or automated (e.g. UTMOS) score has been run on the distilled voices yet.
 
@@ -115,9 +115,9 @@ phonemizer or pronunciation dictionary, so the model stays tokenizer-free.
 ```python
 from freyatts.hangul import decompose_hangul, compose_hangul
 
-decompose_hangul("토닥아, 오늘 날씨 어때?")
-# 'ㅌㅗㄷㅏㄱㅇㅏ, ㅇㅗㄴㅡㄹ ㄴㅏㄹㅆㅣ ㅇㅓㄸㅐ?'
-compose_hangul(decompose_hangul("토닥아, 오늘 날씨 어때?")) == "토닥아, 오늘 날씨 어때?"  # True
+decompose_hangul("안녕, 오늘 날씨 어때?")
+# 'ㅇㅏㄴㄴㅕㅇ, ㅇㅗㄴㅡㄹ ㄴㅏㄹㅆㅣ ㅇㅓㄸㅐ?'
+compose_hangul(decompose_hangul("안녕, 오늘 날씨 어때?")) == "안녕, 오늘 날씨 어때?"  # True
 ```
 
 `freyatts/char_vocab.json` (127 symbols: `<FILL>`, `<UNK>`, space, 12
