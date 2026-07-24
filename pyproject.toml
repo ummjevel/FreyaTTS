@@ -10,12 +10,20 @@ dependencies = [
     "numpy",
     "einops",
     "soundfile",
-    "librosa",
     "huggingface_hub",
     "safetensors",
     "voxcpm",
     "uroman",
 ]
+
+# librosa (-> numba -> llvmlite) is only used by an optional collapse-retry
+# quality check in pipeline.py's _voiced_ok(), which is already wrapped in a
+# try/except and silently no-ops without it. numba/llvmlite regularly lag
+# new CPython releases by many months and can fail to build entirely on a
+# just-released interpreter (seen: llvmlite 0.36.0 refusing Python 3.14),
+# so it's opt-in rather than a hard dependency.
+[project.optional-dependencies]
+quality-check = ["librosa"]
 
 [project.urls]
 Homepage = "https://github.com/ummjevel/FreyaTTS"
