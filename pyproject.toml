@@ -45,6 +45,13 @@ Homepage = "https://github.com/ummjevel/FreyaTTS"
 [tool.setuptools.packages.find]
 include = ["freyatts*"]
 
+# char_vocab.json is loaded at runtime relative to the package (see
+# pipeline.py's from_pretrained) but setuptools doesn't bundle non-.py
+# files by default -- without this, installed copies of the package are
+# missing it and crash on first use.
+[tool.setuptools.package-data]
+freyatts = ["char_vocab.json"]
+
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
