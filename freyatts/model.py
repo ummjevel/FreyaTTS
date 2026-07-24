@@ -17,8 +17,9 @@ from einops import rearrange
 # noise seed for the shipped voice. Re-pin this once a Korean SFT checkpoint
 # has a chosen voice; any fixed seed gives a fixed (but arbitrary) speaker
 # until then. Was LEYLA_SEED=9 (spread 2.3 Hz vs 14.9 Hz for seed 0) for the
-# original Turkish release -- kept as the placeholder default.
-DEFAULT_SEED = 9
+# production seed for the Korean 063 대화체 voice-lock (chosen by ear after SFT
+# stage 1: speaker 063, 대화체-only, step1500).
+DEFAULT_SEED = 11
 
 
 def rope_freqs(dim, length, theta=10000.0, device=None):

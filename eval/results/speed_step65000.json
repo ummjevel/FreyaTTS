@@ -1,0 +1,25 @@
+{
+ "system": "freyatts",
+ "gpu": "NVIDIA H100 80GB HBM3",
+ "load_s": 11.9,
+ "params": 337182785,
+ "ttft_mode": "chunked",
+ "buckets": {
+  "short": {
+   "latency_s": 1.447,
+   "ttft_s": 0.729,
+   "rtf": 0.584
+  },
+  "medium": {
+   "latency_s": 1.556,
+   "ttft_s": 0.778,
+   "rtf": 0.363
+  },
+  "long": {
+   "latency_s": 2.555,
+   "ttft_s": 0.862,
+   "rtf": 0.203
+  }
+ },
+ "vram_gb_peak": 2.06
+}

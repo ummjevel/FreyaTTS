@@ -1,0 +1,7 @@
+{
+  "voiceA_hot1B": {"ref_audio": "confirmed_voices/voiceA_hot1B.wav", "ref_text": "음, 그건 이렇게 하면 되지 않을까요?", "desc": "쿨 hot guy, 중저음, 자연스러운 대화체 (최선)"},
+  "voiceB_cool4":  {"ref_audio": "confirmed_voices/voiceB_cool4.wav",  "ref_text": "괜찮아요, 제가 도와드릴게요.", "desc": "도시세련, 쿨하지만 차갑지 않음"},
+  "voiceC_cool5":  {"ref_audio": "confirmed_voices/voiceC_cool5.wav",  "ref_text": "괜찮아요, 제가 도와드릴게요.", "desc": "절제따뜻, 담백한 쿨"},
+  "voiceD_young3": {"ref_audio": "confirmed_voices/voiceD_young3.wav", "ref_text": "음, 그건 이렇게 하면 되지 않을까요?", "desc": "발랄싱그 풋풋 연하남 (중저음, 어리고 싱그러운)"},
+  "voiceE_young2": {"ref_audio": "confirmed_voices/voiceE_young2.wav", "ref_text": "아 진짜요? 완전 신기하네요.", "desc": "앳된 수줍은 연하남 (풋풋, 클론 일관성 좋음)"}
+}

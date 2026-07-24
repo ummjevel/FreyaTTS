@@ -184,6 +184,7 @@ def main():
     step = start_step
     t0 = time.time()
     running = {"cfm": 0.0, "dur": 0.0, "n": 0}
+    n_skipped = 0
     it = iter(loader)
 
     while step < args.steps:
@@ -205,9 +206,22 @@ def main():
                 loss = cfm + args.lambda_dur * dur
 
             accelerator.backward(loss)
+            # NaN/Inf guard: a rare bad batch can spike the gradient and, with no
+            # protection, one non-finite update permanently poisons the weights
+            # (observed: healthy cfm 0.92 -> nan in a single step). clip_grad_norm_
+            # returns the total norm computed from the (DDP-synchronized) grads, so
+            # every rank sees the same value and skips the step in lockstep.
+            skip_step = False
             if accelerator.sync_gradients:
-                accelerator.clip_grad_norm_(model.parameters(), 1.0)
-            optimizer.step()
+                gnorm = accelerator.clip_grad_norm_(model.parameters(), 1.0)
+                if gnorm is not None and not torch.isfinite(gnorm):
+                    skip_step = True
+                    n_skipped += 1
+                    if accelerator.is_main_process:
+                        print(f"[skip] step {step}: non-finite grad norm {float(gnorm)}, "
+                              f"update skipped (total skipped {n_skipped})", flush=True)
+            if not skip_step:
+                optimizer.step()
             optimizer.zero_grad(set_to_none=True)
 
         running["cfm"] += float(cfm)

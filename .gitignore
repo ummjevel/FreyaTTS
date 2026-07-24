@@ -29,6 +29,9 @@ runs/
 # data and audio outputs
 data/
 outputs/
+samples_stage1/
+text_data/
+script/logs/
 *.wav
 *.flac
 *.mp3

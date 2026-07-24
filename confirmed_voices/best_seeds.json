@@ -1,0 +1,7 @@
+{
+  "voiceA_hot1B": {"seed": 9,  "quality": "ok"},
+  "voiceB_cool4": {"seed": 9,  "quality": "부족 (화질↓)"},
+  "voiceC_cool5": {"seed": 1,  "quality": "상대적 양호"},
+  "voiceD_young3": {"seed": 11, "quality": "보통"},
+  "voiceE_young2": {"seed": 9,  "quality": "부족 (화질↓, 기계톤)"}
+}
