@@ -1,15 +1,18 @@
 """Frozen VoxCPM2 AudioVAE loader.
 
 FreyaTTS generates 64-dim latents at 25 Hz and relies on the pretrained
-VoxCPM2 AudioVAE (openbmb/VoxCPM2) to decode them to 48 kHz waveforms.
-Requires the `voxcpm` pip package.
+VoxCPM2 AudioVAE (openbmb/VoxCPM2) to decode them to 48 kHz waveforms. Only
+the AudioVAE model code is needed, so it's vendored in-tree
+(freyatts/_vendor/audiovae/) rather than depending on the full `voxcpm` pip
+package, which additionally pulls in funasr/gradio/modelscope and a
+librosa->numba->llvmlite chain unrelated to this.
 """
 
 import os
 
 import torch
 from huggingface_hub import hf_hub_download
-from voxcpm.modules.audiovae import AudioVAEV2, AudioVAEConfigV2
+from freyatts._vendor.audiovae import AudioVAEV2, AudioVAEConfigV2
 
 
 def load_audio_vae(device="cuda", token=None):

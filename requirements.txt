@@ -2,11 +2,14 @@ torch
 numpy
 einops
 soundfile
-librosa
 huggingface_hub
 safetensors
-voxcpm
+pydantic
 uroman
+
+# optional: only used by pipeline.py's _voiced_ok() quality-check retry,
+# already try/except-guarded to no-op without it (see pyproject.toml)
+# librosa
 
 # evaluation only
 # faster-whisper

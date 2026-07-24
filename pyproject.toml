@@ -8,8 +8,14 @@ license = { file = "LICENSE" }
 # will otherwise still *try* to resolve/build this and its dependency tree,
 # and fail deep inside pip's or a dependency's internals with a confusing
 # error instead of a clear "unsupported Python version" message. Bump this
-# once the dependency chain (torch, voxcpm, etc.) has caught up.
+# once the dependency chain has caught up.
 requires-python = ">=3.10,<3.14"
+# No `voxcpm` dependency: only its AudioVAEV2 module is needed, which is
+# vendored in-tree (freyatts/_vendor/audiovae/, Apache-2.0, from
+# openbmb/VoxCPM). The full `voxcpm` package additionally requires funasr,
+# gradio, modelscope, and a librosa->numba->llvmlite chain that has
+# repeatedly failed to build on newer Python releases -- none of which
+# FreyaTTS actually uses.
 dependencies = [
     "torch",
     "numpy",
@@ -17,7 +23,7 @@ dependencies = [
     "soundfile",
     "huggingface_hub",
     "safetensors",
-    "voxcpm",
+    "pydantic",
     "uroman",
 ]
 
