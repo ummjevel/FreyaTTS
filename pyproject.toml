@@ -1,0 +1,31 @@
+[project]
+name = "freyatts"
+version = "0.1.0"
+description = "FreyaTTS (Korean fork): tokenizer-free flow-matching TTS, distilled onto Qwen3-TTS-designed voices."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+dependencies = [
+    "torch",
+    "numpy",
+    "einops",
+    "soundfile",
+    "librosa",
+    "huggingface_hub",
+    "safetensors",
+    "voxcpm",
+    "uroman",
+]
+
+[project.urls]
+Homepage = "https://github.com/ummjevel/FreyaTTS"
+
+# Only the small inference package (freyatts/) is installable -- training
+# scripts, eval, and sbatch pipeline stay as repo-root files/scripts, not
+# part of the pip package.
+[tool.setuptools.packages.find]
+include = ["freyatts*"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
