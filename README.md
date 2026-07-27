@@ -19,15 +19,18 @@ This is a **Korean-language fork** of [freyavoiceai/FreyaTTS](https://github.com
 
 > **상태 (한국어)**: 한국어 가중치는 이미 학습 완료 상태이며, 5개 타겟 목소리로 distillation까지 끝났습니다. 터키어 체크포인트를 파인튜닝한 게 아니라 한국어로 처음부터(from scratch) pretrain했습니다. 실제 측정치는 [Evaluation](#evaluation) 참고 — 추정치가 아니라 실측입니다.
 
-**Correction vs. the upstream paper's parameter count**: the upstream FreyaTTS technical report states 183.2M parameters, but `training/configs/pretrain.yaml`'s actual dims (`d_model=768, depth=22, ff=2048`) build a **337M**-parameter model (confirmed at load time: `eval/results/speed_final.json` reports `"params": 337182785`). Every checkpoint in this repo (`checkpoints/pretrain`, `checkpoints/distill_voice{A..E}`) is this 337M config, not 183M. A smaller re-pretrain at the paper's actual 183M dims (`d_model=640, depth=16, ff=2048`) is in progress (`checkpoints/pretrain_183M/`, plus 88M and 127M variants) but has **no trained checkpoints yet** as of this writing.
+**Correction vs. the upstream paper's parameter count**: the upstream FreyaTTS technical report states 183.2M parameters, but `training/configs/pretrain.yaml`'s actual dims (`d_model=768, depth=22, ff=2048`) build a **337M**-parameter model (confirmed at load time: `eval/results/speed_final.json` reports `"params": 337182785`). Every *voice-locked* checkpoint in this repo (`checkpoints/distill_voice{A..E}`) is this 337M config, not 183M.
 
-> **파라미터 수 정정 (한국어)**: 원 논문은 183.2M이라고 표기하지만, 실제 `pretrain.yaml` 설정(d_model=768, depth=22, ff=2048)으로 빌드되는 모델은 **337M**입니다 (`eval/results/speed_final.json`의 `"params": 337182785`로 실측 확인). 이 저장소의 모든 체크포인트(`checkpoints/pretrain`, `checkpoints/distill_voice{A..E}`)는 337M 설정입니다. 논문 스펙 그대로인 183M(d_model=640, depth=16) 재학습은 진행 중이지만 **아직 학습된 체크포인트가 하나도 없습니다**.
+Three smaller re-pretrains have since been trained from scratch to 150k steps on the same corpus and benchmarked -- **88M**, **127M**, and **183M** (`checkpoints/pretrain_{88M,127M,183M}/`). The 183M variant (`d_model=640, depth=16, heads=10, ff=2048`) loads at 183,220,545 parameters, matching the paper's stated 183.2M exactly. **All three score better WER than the 337M model** (see [Size sweep](#size-sweep-pretrain-checkpoints-150k-steps)), so the larger config is not buying accuracy on this corpus. No smaller variant has been distilled onto a voice yet -- the five shipped voices remain 337M.
+
+> **파라미터 수 정정 (한국어)**: 원 논문은 183.2M이라고 표기하지만, 실제 `pretrain.yaml` 설정(d_model=768, depth=22, ff=2048)으로 빌드되는 모델은 **337M**입니다 (`eval/results/speed_final.json`의 `"params": 337182785`로 실측 확인). 목소리가 고정된 체크포인트(`checkpoints/distill_voice{A..E}`)는 전부 337M입니다. 이후 동일 코퍼스로 **88M / 127M / 183M** 세 가지를 150k step까지 from-scratch 재학습하고 벤치까지 마쳤습니다. 이 중 183M(d_model=640, depth=16)은 실측 183,220,545개로 논문 표기 183.2M과 정확히 일치합니다. **세 모델 모두 337M보다 WER이 낮습니다** ([Size sweep](#size-sweep-pretrain-checkpoints-150k-steps) 참고) — 이 코퍼스에서는 큰 설정이 정확도를 사주지 못한다는 뜻입니다. 다만 소형 모델은 아직 distill을 하지 않아, 공개된 5개 목소리는 여전히 337M입니다.
 
 It is tokenizer-free at the character (jamo) level -- no phonemizer, no G2P -- and generates speech with a **non-autoregressive conditional flow-matching DiT** in the frozen AudioVAE2 latent space (25 Hz, 64-dim latents, 16 kHz encode / 48 kHz decode).
 
 ### Highlights
 
-- **337M parameters** (not the 183.2M of the upstream paper -- see correction above), measured RTF 0.17-0.58 depending on utterance length on an H100 (see [Evaluation](#evaluation)) -- no Apple/CPU numbers have been measured for this Korean checkpoint yet
+- **337M parameters** for the five shipped voices (not the 183.2M of the upstream paper -- see correction above), measured RTF 0.17-0.58 depending on utterance length on an H100 (see [Evaluation](#evaluation)) -- no Apple/CPU numbers have been measured for this Korean checkpoint yet
+- **Smaller is not worse here** - 88M/127M/183M pretrains all beat the 337M on WER (see [Size sweep](#size-sweep-pretrain-checkpoints-150k-steps)); the smallest runs at RTF 0.12
 - **Tokenizer-free Korean** - Hangul syllables decomposed to jamo at the character level, 127-symbol vocabulary, no phonemizer or G2P stage to maintain
 - **Non-autoregressive** - a single 32-step Euler ODE per clause, no classifier-free guidance needed
 - **48 kHz output** - the frozen AudioVAE2 decodes 25 Hz latents straight to 48 kHz audio
@@ -52,9 +55,9 @@ Five target voices were built by using [Qwen3-TTS VoiceDesign](https://huggingfa
 | `voiceD_young3` | 밝고 경쾌한 중저음, 생기 있는 톤 | **보통** -- average | "음, 그건 이렇게 하면 되지 않을까요?" |
 | `voiceE_young2` | 밝고 앳된 고음, 클론 일관성 좋음 | **부족 (화질↓, 기계톤)** -- below target, robotic artifacts | "아 진짜요? 완전 신기하네요." |
 
-Reference clips: `confirmed_voices/voice{A..E}_*.wav`. Quality self-ratings are from internal listening review (`confirmed_voices/best_seeds.json`), not a formal MOS study -- no third-party or automated (e.g. UTMOS) score has been run on the distilled voices yet.
+Reference clips: `confirmed_voices/voice{A..E}_*.wav`. Quality self-ratings are from internal listening review (`confirmed_voices/best_seeds.json`), not a formal MOS study -- no third-party or automated (e.g. UTMOS) score has been run on the distilled voices yet. Per-voice WER/CER *has* now been measured ([Distilled voices](#distilled-voices-evalresultsbench_distill_voicejson)), and it disagrees with these ratings: `voiceE`, rated below target, has the best WER of the five. Intelligibility and perceived quality are separate axes here.
 
-> **목소리 (한국어)**: 5개 목소리는 전부 Qwen3-TTS VoiceDesign으로 디자인한 **합성 정체성**이며 실존 인물 녹음이 아닙니다. 잠금된 레퍼런스로 11,554문장 teacher 코퍼스를 합성해 337M FreyaTTS student를 distill했습니다. **품질은 균일하지 않습니다** — A(최선)와 C(양호)는 쓸 만하지만, **B와 E는 자체 평가상 "부족"** 판정입니다 (화질 저하/기계적 톤). 정식 MOS나 UTMOS 등 자동 평가는 아직 이 5개 distill 모델에 대해 돌리지 않았고, 내부 청취 평가만 반영된 수치입니다.
+> **목소리 (한국어)**: 5개 목소리는 전부 Qwen3-TTS VoiceDesign으로 디자인한 **합성 정체성**이며 실존 인물 녹음이 아닙니다. 잠금된 레퍼런스로 11,554문장 teacher 코퍼스를 합성해 337M FreyaTTS student를 distill했습니다. **품질은 균일하지 않습니다** — A(최선)와 C(양호)는 쓸 만하지만, **B와 E는 자체 평가상 "부족"** 판정입니다 (화질 저하/기계적 톤). 정식 MOS나 UTMOS 등 음질 자동 평가는 아직 이 5개 distill 모델에 대해 돌리지 않았고, 위 표의 판정은 내부 청취 평가입니다. 다만 **목소리별 WER/CER은 측정을 마쳤고, 청취 평가와 어긋납니다** — "부족" 판정인 voiceE가 5개 중 WER이 가장 낮습니다(0.212). 명료도와 체감 음질은 별개 축이라는 뜻이니, WER을 품질 순위로 읽지 마세요.
 
 ---
 
@@ -165,7 +168,7 @@ FreyaTTS is a conditional flow-matching diffusion transformer (DiT) operating in
 - **Text encoding:** character-level Korean (jamo-decomposed), 127 symbols shipped with the package (`freyatts/char_vocab.json`)
 - **Generation:** non-autoregressive flow matching, 32 Euler ODE steps, no CFG
 - **Latent space:** 64-dim latents at 25 Hz; AudioVAE2 encodes at 16 kHz and decodes at 48 kHz
-- **Parameters:** 337M (`d_model=768, depth=22, heads=12, ff=2048`) -- see the parameter-count correction above
+- **Parameters:** 337M (`d_model=768, depth=22, heads=12, ff=2048`) for the shipped voices; 88M/127M/183M pretrain-only variants also exist and score better on WER (see [Size sweep](#size-sweep-pretrain-checkpoints-150k-steps) and the parameter-count correction above)
 - **Training:** from scratch on a licensed Korean speech corpus (pretraining, `checkpoints/pretrain`), then distilled per-voice onto Qwen3-TTS-synthesized data (`checkpoints/distill_voice{A..E}`)
 
 AudioVAE2 is not retrained. It is downloaded from [openbmb/VoxCPM2](https://huggingface.co/openbmb/VoxCPM2) (Apache-2.0) at load time via the `voxcpm` package.
@@ -174,9 +177,9 @@ AudioVAE2 is not retrained. It is downloaded from [openbmb/VoxCPM2](https://hugg
 
 ## Evaluation
 
-Measured on the base pretrain checkpoint (`checkpoints/pretrain`), 300 held-out Korean dev sentences (`eval/eval_ko_dev.jsonl`), Whisper `language="ko"` for WER/CER (`eval/benchmark.py`), on an NVIDIA H100 80GB (`eval/speed.py`). **These numbers are for the pretrain checkpoint before per-voice distillation -- there is no separate WER/CER/UTMOS run yet for `distill_voice{A..E}` individually**; the [Voices](#voices) table above gives self-rated listening quality instead.
+All runs use the same 300 held-out Korean dev sentences (`eval/eval_ko_dev.jsonl`), Whisper `language="ko"` for WER/CER (`eval/benchmark.py`), on an NVIDIA H100 80GB (`eval/speed.py`). Every number below is a **single run with the default seed** -- no seed-variance or confidence interval has been measured, so treat differences of ~0.01 WER as noise.
 
-### Accuracy (WER/CER, `eval/results/bench_*.json`)
+### Accuracy of the 337M pretrain over training (`eval/results/bench_step*.json`)
 
 | Checkpoint | WER | CER | RTF |
 | --- | --- | --- | --- |
@@ -184,7 +187,43 @@ Measured on the base pretrain checkpoint (`checkpoints/pretrain`), 300 held-out 
 | step250000 | 0.320 | 0.187 | 0.21 |
 | final (= step250000 weights) | 0.319 | 0.194 | 0.17 |
 
-WER plateaus around 0.31-0.32 from step 200k onward -- further pretraining past 200k did not meaningfully improve accuracy (`eval/results/bench_step*.json`).
+WER plateaus around 0.31-0.32 from step 200k onward -- further pretraining past 200k did not meaningfully improve accuracy.
+
+### Size sweep (pretrain checkpoints, 150k steps)
+
+Three smaller configs were pretrained from scratch on the same corpus, each for 150k steps, and benchmarked identically:
+
+| Model | `d_model` / depth / heads / ff | Params | Steps | WER | CER | RTF |
+| --- | --- | --- | --- | --- | --- | --- |
+| 88M | 512 / 12 / 8 / 1536 | 87,510,081 | 150k | 0.285 | 0.167 | **0.121** |
+| 127M | 512 / 16 / 8 / 2048 | 127,374,401 | 150k | 0.309 | 0.185 | 0.143 |
+| **183M** | 640 / 16 / 10 / 2048 | 183,220,545 | 150k | **0.262** | **0.153** | 0.149 |
+| 337M (`pretrain/final`) | 768 / 22 / 12 / 2048 | 337,182,785 | 250k | 0.319 | 0.194 | 0.171 |
+
+Two things stand out, and neither has been chased down yet:
+
+- **All three smaller models beat the 337M on WER**, and the 183M does so by a wide margin (0.262 vs 0.319) with fewer training steps and 1.15x faster RTF. On a 560k-utterance corpus the 337M config appears to be past the useful size, not undertrained -- its own WER curve was already flat from step 200k. Note the comparison is not step-matched (337M `final` is 250k steps); the 337M's step-200k benchmark, 0.312, is still worse than the 183M's.
+- **127M scores worse than 88M**, which is a size/accuracy inversion that a single run cannot explain. Until it is re-run with different seeds, treat the 127M row as unreliable rather than as evidence about width-vs-depth.
+
+None of the smaller models has a `speed_*.json` yet, so their TTFT and peak VRAM are unmeasured -- the RTF column above comes from the benchmark run. None has been distilled onto a voice.
+
+### Distilled voices (`eval/results/bench_distill_voice*.json`)
+
+Each voice-locked 337M checkpoint, same dev set and protocol:
+
+| Voice | WER | CER | RTF | Listening self-rating |
+| --- | --- | --- | --- | --- |
+| `voiceA_hot1B` | 0.224 | 0.123 | 0.48 | ok -- best of the 5 |
+| `voiceB_cool4` | 0.243 | 0.135 | 0.39 | below target |
+| `voiceC_cool5` | 0.221 | 0.118 | 0.32 | acceptable |
+| `voiceD_young3` | 0.237 | 0.132 | 0.21 | average |
+| `voiceE_young2` | **0.212** | **0.114** | 0.33 | below target (robotic) |
+
+Distillation improves intelligibility across the board -- every voice lands well under the 0.319 WER of the 337M pretrain it started from, which is expected since each is fit to a single synthetic speaker.
+
+The RTF column is **not** a property of the voices: all five are the identical 337M architecture, so the 0.21-0.48 spread is measurement noise from whatever else shared the GPU during each run, not a speed difference between voices. Use `eval/results/speed_final.json` for speed, not this column.
+
+**WER does not track the listening ratings here.** `voiceE` scores the *best* WER of the five while being one of the two rated below target for robotic artifacts, and `voiceB` is mid-pack on WER despite the same rating. WER measures whether Whisper can read the audio back, not whether it sounds like a person -- so these numbers should not be read as a quality ranking. **No UTMOS or MOS study has been run**, which is exactly the gap that would settle it.
 
 ### Speed (`eval/results/speed_final.json`, H100 80GB, 337M params)
 
@@ -196,7 +235,7 @@ WER plateaus around 0.31-0.32 from step 200k onward -- further pretraining past 
 
 Peak VRAM 2.07 GB, load time 11.3 s. **These are H100 datacenter numbers, not on-device numbers** -- no Apple Neural Engine / CPU / mobile benchmark has been run for this Korean checkpoint. Treat any such number from the upstream Turkish paper as inapplicable here until re-measured on this checkpoint and target hardware.
 
-> **평가 (한국어)**: 위 WER/CER/RTF는 **distill 이전의 base pretrain 체크포인트** 기준 실측치입니다 (300문장 held-out dev set, Whisper 기반). 5개 distill 목소리 각각에 대한 정식 WER/CER/UTMOS 측정은 아직 하지 않았고, [Voices](#voices) 표의 청취 평가만 있습니다. 속도는 H100 서버 기준이며, on-device(모바일/CPU/Apple Neural Engine) 측정은 아직 없습니다 — 터키어 원논문의 CPU/모바일 수치를 이 한국어 체크포인트에 그대로 적용하면 안 됩니다.
+> **평가 (한국어)**: 전부 동일 조건(300문장 held-out dev set, Whisper ko, H100) 실측치이며, **각 설정당 1회 단일 시드 측정**이라 0.01 내외 차이는 노이즈로 보셔야 합니다. 요약하면 — (1) 소형 3종(88M/127M/183M)이 **전부 337M보다 WER이 낮고**, 특히 183M은 0.262 vs 0.319로 차이가 큽니다. 이 코퍼스(56만 발화)에서 337M은 학습 부족이 아니라 과대 설정으로 보입니다(337M 자체 WER 곡선도 200k부터 평평). (2) **127M이 88M보다 나쁜 역전**은 단일 실행으로 설명이 안 되므로, 시드를 바꿔 재실행하기 전까지 127M 행은 신뢰하지 마세요. (3) distill 5종은 전부 pretrain보다 WER이 좋아졌지만, **WER 순위와 청취 평가가 어긋납니다** — voiceE는 WER 최상(0.212)인데 청취 평가는 "부족(기계톤)"입니다. WER은 Whisper가 알아듣는지를 볼 뿐 사람처럼 들리는지를 재지 않으므로 품질 순위로 읽으면 안 되고, 이를 가릴 **UTMOS/MOS는 아직 미측정**입니다. 소형 모델은 `speed_*.json`이 없어 TTFT·VRAM 미측정이고 distill도 아직 없습니다. 속도는 H100 서버 기준이며 on-device(모바일/CPU/Apple Neural Engine) 측정은 없습니다 — 터키어 원논문의 CPU/모바일 수치를 이 한국어 체크포인트에 그대로 적용하면 안 됩니다.
 
 ---
 
