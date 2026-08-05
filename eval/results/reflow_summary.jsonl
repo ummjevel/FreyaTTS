@@ -1,0 +1,4 @@
+{"tag": "teacher_s8", "cer": 0.0987, "utmos": 2.9361, "rhythm_cv": 0.526}
+{"tag": "student_s4", "cer": 0.1529, "utmos": 2.5023, "rhythm_cv": 0.517}
+{"tag": "student_s8", "cer": 0.1323, "utmos": 2.6859, "rhythm_cv": 0.531}
+{"tag": "student_s16", "cer": 0.1377, "utmos": 2.7821, "rhythm_cv": 0.513}

@@ -97,9 +97,10 @@ class FreyaTTSAdapter:
         from freyatts import FreyaTTS
 
         self.tts = FreyaTTS.from_pretrained(args.model, device=args.device)
+        self.steps = args.steps
 
     def synthesize(self, text):
-        wav = self.tts.synthesize(text)
+        wav = self.tts.synthesize(text, steps=self.steps)
         return wav, 48000
 
 
@@ -173,6 +174,8 @@ def main():
     ap.add_argument("--ref", default="", help="reference wav for cloning systems (e.g. xtts)")
     ap.add_argument("--device", default="cuda", help="torch device for synthesis")
     ap.add_argument("--limit", type=int, default=0, help="evaluate only the first N sentences")
+    ap.add_argument("--steps", type=int, default=32,
+                    help="flow-matching ODE steps (freyatts only; default 32)")
     ap.add_argument("--out", default="", help="write results JSON here")
     args = ap.parse_args()
 

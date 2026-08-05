@@ -1,0 +1,8 @@
+{
+ "system": "distill88M_voiceD",
+ "sentences": 300,
+ "wer": 0.2333,
+ "cer": 0.1252,
+ "audio_s": 1345.1,
+ "scoring_s": 76.4
+}

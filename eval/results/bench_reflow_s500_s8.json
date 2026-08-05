@@ -1,0 +1,8 @@
+{
+ "system": "reflow_s500_s8",
+ "sentences": 300,
+ "wer": 0.2757,
+ "cer": 0.1314,
+ "audio_s": 1434.0,
+ "scoring_s": 102.0
+}

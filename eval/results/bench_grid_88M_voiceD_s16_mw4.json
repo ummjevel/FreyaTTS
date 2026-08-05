@@ -1,0 +1,8 @@
+{
+ "system": "88M_voiceD_s16_mw4",
+ "sentences": 300,
+ "wer": 0.2289,
+ "cer": 0.1297,
+ "audio_s": 1501.4,
+ "scoring_s": 111.5
+}

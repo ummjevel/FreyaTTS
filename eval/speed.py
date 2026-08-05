@@ -65,17 +65,18 @@ class FreyaTTSAdapter:
 
         self.tts = FreyaTTS.from_pretrained(args.model, device="cuda")
         self.params = sum(p.numel() for p in self.tts.model.parameters())
+        self.steps = args.steps
 
     def synth(self, text):
-        wav = self.tts.synthesize(text)
+        wav = self.tts.synthesize(text, steps=self.steps)
         return wav, 48000
 
     def synth_ttft(self, text):
         # first-clause latency stands in for streaming TTFT
         t0 = time.time()
-        self.tts.synthesize(first_clause(text))
+        self.tts.synthesize(first_clause(text), steps=self.steps)
         ttft = time.time() - t0
-        wav = self.tts.synthesize(text)
+        wav = self.tts.synthesize(text, steps=self.steps)
         return wav, 48000, ttft
 
 
@@ -260,6 +261,8 @@ def main():
                     help="FreyaTTS model id or local directory")
     ap.add_argument("--prompts", default=os.path.join(HERE, "prompts_ko.json"),
                     help="JSON with short/medium/long prompt buckets")
+    ap.add_argument("--steps", type=int, default=32,
+                    help="flow-matching ODE steps (freyatts only; default 32)")
     ap.add_argument("--runs", type=int, default=10, help="timed runs per sentence")
     ap.add_argument("--warmup", type=int, default=3, help="untimed warmup runs per sentence")
     ap.add_argument("--concurrency", default="",

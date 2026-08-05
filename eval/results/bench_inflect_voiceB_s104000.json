@@ -1,0 +1,8 @@
+{
+ "system": "inflect-voiceB_s104000",
+ "sentences": 300,
+ "wer": 0.1299,
+ "cer": 0.0401,
+ "audio_s": 1568.9,
+ "scoring_s": 119.5
+}

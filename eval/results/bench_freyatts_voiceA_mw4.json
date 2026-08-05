@@ -1,0 +1,8 @@
+{
+ "system": "freyatts-337M-voiceA-mw4",
+ "sentences": 300,
+ "wer": 0.1745,
+ "cer": 0.0721,
+ "audio_s": 1356.5,
+ "scoring_s": 122.8
+}

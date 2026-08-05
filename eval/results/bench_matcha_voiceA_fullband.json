@@ -1,0 +1,8 @@
+{
+ "system": "matcha-ko-voiceA",
+ "sentences": 300,
+ "wer": 0.117,
+ "cer": 0.0339,
+ "audio_s": 1454.8,
+ "scoring_s": 134.4
+}

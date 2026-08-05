@@ -21,23 +21,25 @@ This is a **Korean-language fork** of [freyavoiceai/FreyaTTS](https://github.com
 
 **Correction vs. the upstream paper's parameter count**: the upstream FreyaTTS technical report states 183.2M parameters, but `training/configs/pretrain.yaml`'s actual dims (`d_model=768, depth=22, ff=2048`) build a **337M**-parameter model (confirmed at load time: `eval/results/speed_final.json` reports `"params": 337182785`). Every *voice-locked* checkpoint in this repo (`checkpoints/distill_voice{A..E}`) is this 337M config, not 183M.
 
-Three smaller re-pretrains have since been trained from scratch to 150k steps on the same corpus and benchmarked -- **88M**, **127M**, and **183M** (`checkpoints/pretrain_{88M,127M,183M}/`). The 183M variant (`d_model=640, depth=16, heads=10, ff=2048`) loads at 183,220,545 parameters, matching the paper's stated 183.2M exactly. **All three score better WER than the 337M model** (see [Size sweep](#size-sweep-pretrain-checkpoints-150k-steps)), so the larger config is not buying accuracy on this corpus. No smaller variant has been distilled onto a voice yet -- the five shipped voices remain 337M.
+Three smaller re-pretrains have since been trained from scratch to 150k steps on the same corpus and benchmarked -- **88M**, **127M**, and **183M** (`checkpoints/pretrain_{88M,127M,183M}/`). The 183M variant (`d_model=640, depth=16, heads=10, ff=2048`) loads at 183,220,545 parameters, matching the paper's stated 183.2M exactly. **All three score better CER than the 337M model** (see [Size sweep](#size-sweep-pretrain-checkpoints-150k-steps)), so the larger config is not buying accuracy on this corpus. The 183M and 88M have since been distilled onto all five voices, and the 183M is now the recommended configuration -- see [On-device configuration](#on-device-configuration).
 
-> **파라미터 수 정정 (한국어)**: 원 논문은 183.2M이라고 표기하지만, 실제 `pretrain.yaml` 설정(d_model=768, depth=22, ff=2048)으로 빌드되는 모델은 **337M**입니다 (`eval/results/speed_final.json`의 `"params": 337182785`로 실측 확인). 목소리가 고정된 체크포인트(`checkpoints/distill_voice{A..E}`)는 전부 337M입니다. 이후 동일 코퍼스로 **88M / 127M / 183M** 세 가지를 150k step까지 from-scratch 재학습하고 벤치까지 마쳤습니다. 이 중 183M(d_model=640, depth=16)은 실측 183,220,545개로 논문 표기 183.2M과 정확히 일치합니다. **세 모델 모두 337M보다 WER이 낮습니다** ([Size sweep](#size-sweep-pretrain-checkpoints-150k-steps) 참고) — 이 코퍼스에서는 큰 설정이 정확도를 사주지 못한다는 뜻입니다. 다만 소형 모델은 아직 distill을 하지 않아, 공개된 5개 목소리는 여전히 337M입니다.
+> **파라미터 수 정정 (한국어)**: 원 논문은 183.2M이라고 표기하지만, 실제 `pretrain.yaml` 설정(d_model=768, depth=22, ff=2048)으로 빌드되는 모델은 **337M**입니다 (`eval/results/speed_final.json`의 `"params": 337182785`로 실측 확인). 목소리가 고정된 체크포인트(`checkpoints/distill_voice{A..E}`)는 전부 337M입니다. 이후 동일 코퍼스로 **88M / 127M / 183M** 세 가지를 150k step까지 from-scratch 재학습하고 벤치까지 마쳤습니다. 이 중 183M(d_model=640, depth=16)은 실측 183,220,545개로 논문 표기 183.2M과 정확히 일치합니다. **세 모델 모두 337M보다 WER이 낮습니다** ([Size sweep](#size-sweep-pretrain-checkpoints-150k-steps) 참고) — 이 코퍼스에서는 큰 설정이 정확도를 사주지 못한다는 뜻입니다. 183M과 88M은 이후 5개 목소리 전부에 distill을 마쳤고, **현재 권장 구성은 183M**입니다 ([On-device configuration](#on-device-configuration) 참고).
 
 It is tokenizer-free at the character (jamo) level -- no phonemizer, no G2P -- and generates speech with a **non-autoregressive conditional flow-matching DiT** in the frozen AudioVAE2 latent space (25 Hz, 64-dim latents, 16 kHz encode / 48 kHz decode).
 
 ### Highlights
 
-- **337M parameters** for the five shipped voices (not the 183.2M of the upstream paper -- see correction above), measured RTF 0.17-0.58 depending on utterance length on an H100 (see [Evaluation](#evaluation)) -- no Apple/CPU numbers have been measured for this Korean checkpoint yet
-- **Smaller is not worse here** - 88M/127M/183M pretrains all beat the 337M on WER (see [Size sweep](#size-sweep-pretrain-checkpoints-150k-steps)); the smallest runs at RTF 0.12
+- **183M is the configuration to use**, not the 337M the voices were first built on. With 16 ODE steps and clause splitting it scores CER 0.086 against 0.123 for the 337M default, in half the size -- see [On-device configuration](#on-device-configuration)
+- **Runs on a CPU** - exported to ONNX (`eval/export_onnx.py`), the 183M reaches RTF 0.40-0.54 on four CPU threads, so no GPU is required at inference. The 337M/32-step default is RTF 3.26 and cannot keep up with real time on a CPU
+- **Clause splitting is not optional** - accuracy falls off with utterance length (median CER 0.000 under 20 characters, 0.137 over 60), so `max_words` does real work: 0.123 to 0.072 on the 337M. An ONNX caller that skips it loses most of that back
+- **Smaller is not worse here** - 88M/127M/183M pretrains all beat the 337M on CER (see [Size sweep](#size-sweep-pretrain-checkpoints-150k-steps))
 - **Tokenizer-free Korean** - Hangul syllables decomposed to jamo at the character level, 127-symbol vocabulary, no phonemizer or G2P stage to maintain
 - **Non-autoregressive** - a single 32-step Euler ODE per clause, no classifier-free guidance needed
 - **48 kHz output** - the frozen AudioVAE2 decodes 25 Hz latents straight to 48 kHz audio
 - **5 distilled voices, uneven quality** - see [Voices](#voices); 2 of 5 are self-rated as below the target bar, shipped anyway for transparency, not hidden
 - **Apache-2.0 code** - see [License & Attribution](#license--attribution) for what that does and doesn't cover (pretrain corpus + teacher-model terms are separate from the code license)
 
-> **하이라이트 (한국어)**: 실측 337M 파라미터 (논문 183.2M 아님) / 자모 단위 tokenizer-free 한국어 처리 / non-autoregressive 32-step ODE / 48kHz 출력 / 5개 distill 목소리 중 2개는 자체 평가상 기준 미달이지만 투명하게 그대로 공개 / 코드 자체는 Apache-2.0이나 학습 데이터·teacher 모델 라이선스는 별도 확인 필요.
+> **하이라이트 (한국어)**: 권장 구성은 **183M + 16스텝 + 절 분할**(CER 0.086, 337M 기본값 0.123) / ONNX로 export하면 **CPU 4스레드에서 RTF 0.40~0.54**로 GPU 없이 동작 / 문장이 길수록 정확도가 떨어지므로 **절 분할이 필수**(20자 이하 중앙 CER 0.000, 60자 초과 0.137) / 자모 단위 tokenizer-free 처리 / 48kHz 출력 / 코드는 Apache-2.0이나 학습 데이터·teacher 모델 라이선스는 별도 확인 필요.
 
 ---
 
@@ -55,7 +57,7 @@ Five target voices were built by using [Qwen3-TTS VoiceDesign](https://huggingfa
 | `voiceD_young3` | 밝고 경쾌한 중저음, 생기 있는 톤 | **보통** -- average | "음, 그건 이렇게 하면 되지 않을까요?" |
 | `voiceE_young2` | 밝고 앳된 고음, 클론 일관성 좋음 | **부족 (화질↓, 기계톤)** -- below target, robotic artifacts | "아 진짜요? 완전 신기하네요." |
 
-Reference clips: `confirmed_voices/voice{A..E}_*.wav`. Quality self-ratings are from internal listening review (`confirmed_voices/best_seeds.json`), not a formal MOS study -- no third-party or automated (e.g. UTMOS) score has been run on the distilled voices yet. Per-voice WER/CER *has* now been measured ([Distilled voices](#distilled-voices-evalresultsbench_distill_voicejson)), and it disagrees with these ratings: `voiceE`, rated below target, has the best WER of the five. Intelligibility and perceived quality are separate axes here.
+Reference clips: `confirmed_voices/voice{A..E}_*.wav`. Quality self-ratings are from internal listening review (`confirmed_voices/best_seeds.json`), not a formal MOS study. UTMOSv2 has since been run on all five (`utmos-eval/results/`), and the teacher audio each voice was distilled from was measured too -- that turned out to be the ceiling: teacher UTMOS ranges 3.081 (voiceC) to 3.606 (voiceD), and every student lands 0.22-0.47 below its own teacher. Per-voice WER/CER *has* now been measured ([Distilled voices](#distilled-voices-evalresultsbench_distill_voicejson)), and it disagrees with these ratings: `voiceE`, rated below target, has the best WER of the five. Intelligibility and perceived quality are separate axes here.
 
 > **목소리 (한국어)**: 5개 목소리는 전부 Qwen3-TTS VoiceDesign으로 디자인한 **합성 정체성**이며 실존 인물 녹음이 아닙니다. 잠금된 레퍼런스로 11,554문장 teacher 코퍼스를 합성해 337M FreyaTTS student를 distill했습니다. **품질은 균일하지 않습니다** — A(최선)와 C(양호)는 쓸 만하지만, **B와 E는 자체 평가상 "부족"** 판정입니다 (화질 저하/기계적 톤). 정식 MOS나 UTMOS 등 음질 자동 평가는 아직 이 5개 distill 모델에 대해 돌리지 않았고, 위 표의 판정은 내부 청취 평가입니다. 다만 **목소리별 WER/CER은 측정을 마쳤고, 청취 평가와 어긋납니다** — "부족" 판정인 voiceE가 5개 중 WER이 가장 낮습니다(0.212). 명료도와 체감 음질은 별개 축이라는 뜻이니, WER을 품질 순위로 읽지 마세요.
 
@@ -99,6 +101,19 @@ tts.save_wav(wav, "output.wav")
 ```
 
 `from_pretrained` also accepts a Hugging Face repo id once you publish one. `synthesize` takes optional `steps` (default 32) and `seed` (default `DEFAULT_SEED`) arguments.
+
+**The defaults are not the recommended settings.** They reproduce the original
+337M/32-step/`max_words=11` build. For the measured-best configuration, point at a
+183M checkpoint and set both knobs:
+
+```python
+tts = FreyaTTS.from_pretrained("checkpoints/distill183M_voiceD/final/hf", device="cuda")
+tts.max_words = 4                       # clause splitting; see On-device configuration
+wav = tts.synthesize(text, steps=16, seed=11)   # seed 11 = voiceD
+```
+
+That scores CER 0.086 against 0.123 for the defaults. Each voice has its own
+locked seed (`confirmed_voices/best_seeds.json`): A/B/E = 9, C = 1, D = 11.
 
 **The seed selects the speaker.** FreyaTTS conditions only on text — there is no speaker embedding, speaker id, or reference-audio prefix — so the initial flow-matching noise `x0` *is* the voice. SFT/distillation collapses the model onto whichever corpus you fine-tune on, but the model doesn't condition on that speaker's identity, so a different seed gives a different (arbitrary) person, and most seeds won't sound like your target speaker at all. The locked seed per voice is recorded in `confirmed_voices/best_seeds.json`. Use one seed per utterance (the pipeline already shares it across clauses of a long input); passing `seed=None` opts into random-speaker sampling. Long inputs are normalized and split into clauses automatically, then joined with short pauses. Normalization spells out digit runs and clock times in Korean (`9:28` becomes `아홉시 이십팔분`): the duration predictor sizes the utterance from the character sequence, so numbers left as digits come out truncated.
 
@@ -224,6 +239,97 @@ Distillation improves intelligibility across the board -- every voice lands well
 The RTF column is **not** a property of the voices: all five are the identical 337M architecture, so the 0.21-0.48 spread is measurement noise from whatever else shared the GPU during each run, not a speed difference between voices. Use `eval/results/speed_final.json` for speed, not this column.
 
 **WER does not track the listening ratings here.** `voiceE` scores the *best* WER of the five while being one of the two rated below target for robotic artifacts, and `voiceB` is mid-pack on WER despite the same rating. WER measures whether Whisper can read the audio back, not whether it sounds like a person -- so these numbers should not be read as a quality ranking. **No UTMOS or MOS study has been run**, which is exactly the gap that would settle it.
+
+### On-device configuration
+
+The shipped voices were built at 337M with 32 ODE steps and `max_words=11`. That
+combination is neither the most accurate nor remotely deployable. Measuring size,
+step count and clause splitting as a grid (`eval/results/ondevice_grid.jsonl`)
+gives a better default.
+
+**183M / 16 steps / `max_words=4`**, all five voices, 300-sentence dev set:
+
+| Voice | CER | UTMOS | Rhythm CV |
+| --- | --- | --- | --- |
+| voiceD | **0.0860** | **3.063** | 0.523 |
+| voiceE | 0.0897 | 2.765 | 0.518 |
+| voiceA | 0.0920 | 2.786 | 0.499 |
+| voiceC | 0.0981 | 2.670 | 0.462 |
+| voiceB | 0.1106 | 2.639 | 0.491 |
+
+The 88M at the same settings runs 0.125-0.159, worse on every voice, so 183M is
+the floor worth shipping. For reference the 337M default scores 0.1233 on voiceA
+against this configuration's 0.0920 -- **half the parameters, better accuracy**.
+
+**Clause splitting carries much of that.** Accuracy is length-dependent:
+
+| Input length | Median CER (337M) |
+| --- | --- |
+| <= 20 chars | **0.0000** |
+| 21-40 | 0.0526 |
+| 41-60 | 0.1053 |
+| > 60 | 0.1374 |
+
+Tightening `max_words` from 11 to 4 takes the 337M from 0.1233 to 0.0721 and
+collapses the length correlation (+0.336 to +0.071). The model is accurate on
+short inputs and loses content on long ones -- repeats and drops, not
+mispronunciations -- because the duration head predicts one total frame count for
+the whole clause from a mean-pooled text embedding.
+
+**Rhythm CV is reported because step and size reductions must not flatten
+delivery.** It is the coefficient of variation of syllable onset intervals: the
+teacher corpus measures 0.545, real human speech 0.450, and this model holds
+0.46-0.55 across every size and step count tested. That variety is what
+listeners identify as natural delivery, and it survives shrinking.
+
+### CPU inference (ONNX)
+
+`eval/export_onnx.py` writes three graphs -- duration, DiT (ODE loop unrolled),
+and the AudioVAE2 decoder -- verified against PyTorch to `max_abs_diff 4.5e-05`
+on an identical initial noise, so the voice is unchanged.
+
+| Config | ONNX size | RTF @ 1 thread | RTF @ 4 threads |
+| --- | ---: | ---: | ---: |
+| 337M / 32 steps | 1.6 GB | 3.26-4.02 | — |
+| 183M / 16 steps | 918 MB | 1.32-1.47 | **0.54-0.65** |
+| 183M / 8 steps | 909 MB | **0.90-0.95** | **0.40-0.45** |
+
+Step count barely moves the file size -- the ODE loop is unrolled but the weights
+are stored once as initializers -- so it is purely a speed knob. Eight steps
+clears real time even single-threaded.
+
+**Porting the model is not enough.** The exported graphs are the network only;
+normalization and clause splitting live in `freyatts/pipeline.py`. An ONNX caller
+that skips them scored CER 0.1317 where the same weights driven through the
+python pipeline scored 0.1016 on the same sentences. `eval/bench_onnx_cpu.py`
+reproduces both. Splitting costs a little speed -- more, shorter forward passes
+per utterance -- and moves 4-thread RTF from 0.54-0.65 to 0.59-0.66.
+
+The port is close to lossless but not exactly lossless. On a matched 150-sentence
+subset, PyTorch scores CER 0.0945 and the ONNX path 0.1016. Both run the same
+weights, steps, seed and split, so the 0.007 is the runtime, not the recipe --
+small enough to deploy on, large enough not to call the two interchangeable.
+(The 0.0860 headline figure is over all 300 sentences and is not comparable to
+either.)
+
+fp16 and int8 conversion were attempted and are **not** currently usable: the
+unrolled 16-step graph defeats both `onnxconverter-common` (Einsum and Cast
+operands end up with mismatched types) and `onnxruntime.quantization`
+(`MatMulInteger` shape error), and dynamic int8 only reached 1.21x on size
+anyway because most DiT parameters sit in ops it does not touch.
+
+> **온디바이스 구성 (한국어)**: 권장은 **183M / 16스텝 / `max_words=4`** — voiceD 기준 CER 0.0860으로,
+> 337M 기본 구성(0.1233)보다 정확하면서 파라미터는 절반입니다. **절 분할이 핵심**입니다:
+> 이 모델은 짧은 입력에서 정확하고(20자 이하 중앙 CER 0.000) 길어지면 내용을 빠뜨리거나 반복합니다
+> (60자 초과 0.137). 발음을 틀리는 게 아니라 길이 예측이 문장 전체를 평균 하나로 뭉개서 생기는 문제입니다.
+> ONNX로 CPU 4스레드 RTF 0.54(16스텝)·0.40(8스텝)이라 GPU가 필요 없지만, **정규화와 분할을 호출부에
+> 반드시 같이 구현**해야 합니다(빠뜨리면 CER 0.1016 → 0.1317). 같은 150문장 기준 PyTorch 0.0945 /
+> ONNX 0.1016으로 런타임 차이가 0.007 남아 있습니다 — 배포에 무리는 없지만 동일하다고 할 수는 없습니다.
+> fp16·int8 변환은 현재 표준 도구로 실패하며, 언롤된 그래프의 타입 처리 문제입니다.
+>
+> **스텝 수를 더 줄이려면 그냥 8스텝으로 돌리세요.** ZipVoice식 reflow distillation을 시도했지만
+> 학생이 모든 스텝에서 teacher보다 나빴습니다(아래 참고). distill 없이 8스텝은 CER 0.0987로,
+> 16스텝 대비 +0.013에 속도 2배이고 리듬(0.526)도 그대로입니다.
 
 ### Speed (`eval/results/speed_final.json`, H100 80GB, 337M params)
 

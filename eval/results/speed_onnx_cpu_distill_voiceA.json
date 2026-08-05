@@ -1,0 +1,30 @@
+{
+ "system": "freyatts-onnx-cpu",
+ "onnx_dir": "/data/users/voice/zoey/FreyaTTS/onnx_export/distill_voiceA",
+ "provider": "cpu",
+ "num_threads": 1,
+ "ode_steps": 32,
+ "buckets": {
+  "short": {
+   "latency_s": 7.23,
+   "rtf": 4.017,
+   "audio_s": 1.8
+  },
+  "medium": {
+   "latency_s": 11.6,
+   "rtf": 3.494,
+   "audio_s": 3.32
+  },
+  "long": {
+   "latency_s": 30.44,
+   "rtf": 3.264,
+   "audio_s": 9.32
+  }
+ },
+ "verification": {
+  "max_abs_diff": 4.5e-05,
+  "rel_rms_error": 3.2e-05,
+  "len_pytorch": 119040,
+  "len_onnx": 119040
+ }
+}

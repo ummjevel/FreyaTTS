@@ -1,0 +1,8 @@
+{
+ "system": "inflect-micro-voiceA",
+ "sentences": 300,
+ "wer": 0.1796,
+ "cer": 0.0603,
+ "audio_s": 1309.5,
+ "scoring_s": 100.5
+}

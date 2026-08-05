@@ -1,0 +1,8 @@
+{
+ "system": "pt_150_s16",
+ "sentences": 150,
+ "wer": 0.2164,
+ "cer": 0.0945,
+ "audio_s": 741.0,
+ "scoring_s": 53.3
+}

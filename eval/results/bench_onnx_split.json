@@ -1,0 +1,8 @@
+{
+ "system": "onnx-split-183M-s16",
+ "sentences": 150,
+ "wer": 0.22,
+ "cer": 0.1016,
+ "audio_s": 741.0,
+ "scoring_s": 53.8
+}

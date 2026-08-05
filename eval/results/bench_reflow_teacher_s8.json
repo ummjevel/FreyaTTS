@@ -1,0 +1,8 @@
+{
+ "system": "teacher_s8",
+ "sentences": 300,
+ "wer": 0.2205,
+ "cer": 0.0987,
+ "audio_s": 1435.0,
+ "scoring_s": 100.4
+}

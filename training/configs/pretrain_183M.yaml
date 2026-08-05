@@ -1,0 +1,30 @@
+# FreyaTTS from-scratch pretraining -- 183M variant (the upstream paper's dims)
+# usage: SIZE=183M GPUS=4,5,6,7 bash script/12_pretrain_v2.sh
+#
+# 183,220,545 params at vocab=127, which is the 183.2M the upstream technical
+# report states. Best WER of the size sweep so far (0.262 on the 133-only corpus).
+
+data: data/latents
+vocab_json: freyatts/char_vocab.json
+out: checkpoints/pretrain_183M
+
+# model (183M)
+d_model: 640
+depth: 16
+heads: 10
+ff: 2048
+
+# optimization -- identical to the 337M run
+steps: 150000
+batch_size: 64
+grad_accum: 1
+lr: 5.0e-4
+warmup: 2000
+lambda_dur: 0.1
+
+max_frames: 500
+num_workers: 3
+
+save_every: 10000
+log_every: 50
+seed: 0

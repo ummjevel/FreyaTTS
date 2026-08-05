@@ -41,3 +41,10 @@ script/logs/
 # environment and OS
 .env
 .DS_Store
+
+# exported models and synthesized audio (regenerable from checkpoints)
+onnx_export/
+synth/
+
+# operational notes about another account's infrastructure -- not for a public remote
+RESTORE_VLLM.md

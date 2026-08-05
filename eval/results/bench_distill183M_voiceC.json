@@ -1,0 +1,8 @@
+{
+ "system": "distill183M_voiceC",
+ "sentences": 300,
+ "wer": 0.2249,
+ "cer": 0.1186,
+ "audio_s": 1667.4,
+ "scoring_s": 75.9
+}

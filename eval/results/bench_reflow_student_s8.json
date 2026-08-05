@@ -1,0 +1,8 @@
+{
+ "system": "student_s8",
+ "sentences": 300,
+ "wer": 0.2742,
+ "cer": 0.1323,
+ "audio_s": 1411.8,
+ "scoring_s": 131.6
+}

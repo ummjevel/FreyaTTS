@@ -1,0 +1,24 @@
+{
+ "system": "freyatts-onnx-cpu",
+ "onnx_dir": "/data/users/voice/zoey/FreyaTTS/onnx_export/distill183M_voiceD_s16",
+ "provider": "cpu",
+ "num_threads": 4,
+ "ode_steps": 16,
+ "buckets": {
+  "short": {
+   "latency_s": 1.167,
+   "rtf": 0.661,
+   "audio_s": 1.76
+  },
+  "medium": {
+   "latency_s": 1.911,
+   "rtf": 0.591,
+   "audio_s": 3.28
+  },
+  "long": {
+   "latency_s": 6.757,
+   "rtf": 0.597,
+   "audio_s": 11.36
+  }
+ }
+}

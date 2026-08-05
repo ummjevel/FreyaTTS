@@ -42,8 +42,12 @@ export CUDA_VISIBLE_DEVICES="$GPUID"
 export PYTHONPATH="$REPO:${PYTHONPATH:-}"
 cd "$REPO"
 
-# tag results by the checkpoint dir name (e.g. step30000, final)
-TAG=$(basename "$(dirname "$CKPT")")
+# tag results by the checkpoint dir name (e.g. step30000, final).
+# WARNING: every run dir has a `final/`, so the default tag collides across runs
+# -- evaluating checkpoints/pretrain_183M/final would overwrite bench_final.json
+# from checkpoints/pretrain. Pass TAG explicitly for anything but the main run:
+#   TAG=pretrain_183M CKPT=checkpoints/pretrain_183M/final/model.pt sbatch ...
+TAG="${TAG:-$(basename "$(dirname "$CKPT")")}"
 HFDIR="$(dirname "$CKPT")/hf"
 mkdir -p eval/results
 

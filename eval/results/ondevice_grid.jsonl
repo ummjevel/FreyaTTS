@@ -1,0 +1,10 @@
+{"tag": "183M_voiceD_s16_mw4", "size": "183M", "voice": "D", "cer": 0.086, "wer": 0.1958, "utmos": 3.0633, "rhythm_cv": 0.523}
+{"tag": "183M_voiceC_s16_mw4", "size": "183M", "voice": "C", "cer": 0.0981, "wer": 0.2054, "utmos": 2.6699, "rhythm_cv": 0.462}
+{"tag": "183M_voiceA_s16_mw4", "size": "183M", "voice": "A", "cer": 0.092, "wer": 0.2035, "utmos": 2.7859, "rhythm_cv": 0.499}
+{"tag": "183M_voiceB_s16_mw4", "size": "183M", "voice": "B", "cer": 0.1106, "wer": 0.2238, "utmos": 2.6391, "rhythm_cv": 0.491}
+{"tag": "183M_voiceE_s16_mw4", "size": "183M", "voice": "E", "cer": 0.0897, "wer": 0.1936, "utmos": 2.7654, "rhythm_cv": 0.518}
+{"tag": "88M_voiceB_s16_mw4", "size": "88M", "voice": "B", "cer": 0.1252, "wer": 0.2403, "utmos": 2.5825, "rhythm_cv": 0.548}
+{"tag": "88M_voiceA_s16_mw4", "size": "88M", "voice": "A", "cer": 0.1593, "wer": 0.2738, "utmos": 2.6309, "rhythm_cv": 0.475}
+{"tag": "88M_voiceC_s16_mw4", "size": "88M", "voice": "C", "cer": 0.1305, "wer": 0.2378, "utmos": 2.5905, "rhythm_cv": 0.487}
+{"tag": "88M_voiceD_s16_mw4", "size": "88M", "voice": "D", "cer": 0.1297, "wer": 0.2289, "utmos": 3.0146, "rhythm_cv": 0.52}
+{"tag": "88M_voiceE_s16_mw4", "size": "88M", "voice": "E", "cer": 0.126, "wer": 0.2319, "utmos": 2.6979, "rhythm_cv": 0.535}

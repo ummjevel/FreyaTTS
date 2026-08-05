@@ -1,0 +1,8 @@
+{
+ "system": "matcha-voiceA-ep299",
+ "sentences": 300,
+ "wer": 0.1152,
+ "cer": 0.0427,
+ "audio_s": 1507.1,
+ "scoring_s": 115.5
+}

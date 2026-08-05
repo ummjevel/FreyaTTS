@@ -1,0 +1,6 @@
+{"tag": "distill183M_voiceB", "cer": 0.1295, "wer": 0.2492, "utmos": 2.7832, "rhythm_cv": 0.452}
+{"tag": "distill183M_voiceC", "cer": 0.1186, "wer": 0.2249, "utmos": 2.7405, "rhythm_cv": 0.44}
+{"tag": "distill183M_voiceD", "cer": 0.1156, "wer": 0.2308, "utmos": 3.1905, "rhythm_cv": 0.481}
+{"tag": "distill88M_voiceB", "cer": 0.1417, "wer": 0.2643, "utmos": 2.7204, "rhythm_cv": 0.455}
+{"tag": "distill88M_voiceC", "cer": 0.1338, "wer": 0.2385, "utmos": 2.6985, "rhythm_cv": 0.456}
+{"tag": "distill88M_voiceD", "cer": 0.1252, "wer": 0.2333, "utmos": 3.1475, "rhythm_cv": 0.512}

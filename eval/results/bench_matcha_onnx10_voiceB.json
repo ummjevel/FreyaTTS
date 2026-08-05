@@ -1,0 +1,8 @@
+{
+ "system": "matcha-onnx10-voiceB",
+ "sentences": 300,
+ "wer": 0.1049,
+ "cer": 0.0291,
+ "audio_s": 1437.7,
+ "scoring_s": 113.9
+}

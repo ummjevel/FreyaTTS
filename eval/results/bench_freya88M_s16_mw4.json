@@ -1,0 +1,8 @@
+{
+ "system": "freya88M-s16-mw4",
+ "sentences": 300,
+ "wer": 0.2746,
+ "cer": 0.16,
+ "audio_s": 1505.9,
+ "scoring_s": 91.0
+}
